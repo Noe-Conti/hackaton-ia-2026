@@ -28,7 +28,23 @@ TRIGGER_PATTERNS = [
 def load_dataset(path):
     print(f"Chargement de {path} ...")
     with open(path, "r", encoding="utf-8") as f:
-        data = json.load(f)
+        first_char = f.read(1)
+        f.seek(0)
+
+        if first_char == "[":
+            # JSON classique : un seul tableau englobant
+            data = json.load(f)
+        else:
+            # JSONL : un objet JSON par ligne (cas le plus courant pour les gros datasets)
+            data = []
+            for line_num, line in enumerate(f, 1):
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    data.append(json.loads(line))
+                except json.JSONDecodeError as e:
+                    print(f"  ⚠️ Ligne {line_num} ignorée (JSON invalide) : {e}")
 
     # Le dataset peut être une liste directe, ou un dict avec une clé "train"/"data"
     if isinstance(data, dict):
