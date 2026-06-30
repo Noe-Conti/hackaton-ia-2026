@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TechCorp Financial Assistant</title>
+<style>
+  :root {
+    --navy-950: #0a0e17;
+    --navy-900: #0f1525;
+    --navy-800: #161e33;
+    --navy-700: #1f2940;
+    --gold-500: #c9a14a;
+    --gold-400: #ddbb6e;
+    --green-ok: #3ea66b;
+    --red-ko: #d9534f;
+    --text-hi: #eef1f6;
+    --text-lo: #8a93a8;
+    --serif: "Georgia", "Iowan Old Style", "Times New Roman", serif;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif;
+    --mono: "SFMono-Regular", Consolas, monospace;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--navy-950);
+    background-image:
+      radial-gradient(ellipse 900px 500px at 50% -10%, rgba(201,161,74,0.08), transparent 60%);
+    color: var(--text-hi);
+    font-family: var(--sans);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    border-bottom: 1px solid var(--navy-700);
+    padding: 22px 28px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .brand {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+
+  .brand .mark {
+    font-family: var(--serif);
+    font-size: 22px;
+    letter-spacing: 0.5px;
+    color: var(--gold-400);
+    border: 1px solid var(--gold-500);
+    padding: 3px 9px;
+    border-radius: 3px;
+  }
+
+  .brand h1 {
+    font-family: var(--serif);
+    font-size: 19px;
+    font-weight: 400;
+    margin: 0;
+    color: var(--text-hi);
+    letter-spacing: 0.2px;
+  }
+
+  .brand .sub {
+    font-size: 12px;
+    color: var(--text-lo);
+    margin-top: 2px;
+  }
+
+  #status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12.5px;
+    color: var(--text-lo);
+    padding: 6px 12px;
+    border: 1px solid var(--navy-700);
+    border-radius: 20px;
+    background: var(--navy-900);
+  }
+
+  #status .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--text-lo);
+    transition: background 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  #status.ok .dot { background: var(--green-ok); box-shadow: 0 0 8px rgba(62,166,107,0.7); }
+  #status.ko .dot { background: var(--red-ko); box-shadow: 0 0 8px rgba(217,83,79,0.6); }
+  #status.checking .dot { background: var(--gold-500); animation: pulse 1.2s infinite ease-in-out; }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.35; }
+  }
+
+  main {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    padding: 24px 20px 0;
+    overflow: hidden;
+  }
+
+  #chat-wrap {
+    width: 100%;
+    max-width: 760px;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+
+  #messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 4px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  #messages::-webkit-scrollbar { width: 6px; }
+  #messages::-webkit-scrollbar-thumb { background: var(--navy-700); border-radius: 3px; }
+
+  .empty-state {
+    margin: auto;
+    text-align: center;
+    color: var(--text-lo);
+    max-width: 380px;
+  }
+
+  .empty-state .glyph {
+    font-family: var(--serif);
+    font-size: 34px;
+    color: var(--gold-500);
+    margin-bottom: 10px;
+  }
+
+  .empty-state p { font-size: 13.5px; line-height: 1.6; }
+
+  .msg {
+    display: flex;
+    flex-direction: column;
+    max-width: 82%;
+    animation: rise 0.25s ease;
+  }
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .msg.user { align-self: flex-end; align-items: flex-end; }
+  .msg.bot { align-self: flex-start; align-items: flex-start; }
+
+  .msg .role {
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-lo);
+    margin-bottom: 5px;
+    padding: 0 4px;
+  }
+
+  .msg .bubble {
+    padding: 11px 15px;
+    border-radius: 12px;
+    font-size: 14.5px;
+    line-height: 1.55;
+    white-space: pre-wrap;
+  }
+
+  .msg.user .bubble {
+    background: var(--gold-500);
+    color: var(--navy-950);
+    border-bottom-right-radius: 3px;
+  }
+
+  .msg.bot .bubble {
+    background: var(--navy-800);
+    border: 1px solid var(--navy-700);
+    color: var(--text-hi);
+    border-bottom-left-radius: 3px;
+  }
+
+  .msg.bot .bubble.error {
+    border-color: rgba(217,83,79,0.4);
+    color: #e7a6a3;
+  }
+
+  .typing {
+    display: flex;
+    gap: 4px;
+    padding: 4px 2px;
+  }
+  .typing span {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--text-lo);
+    animation: bounce 1.1s infinite ease-in-out;
+  }
+  .typing span:nth-child(2) { animation-delay: 0.15s; }
+  .typing span:nth-child(3) { animation-delay: 0.3s; }
+  @keyframes bounce {
+    0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+    30% { transform: translateY(-4px); opacity: 1; }
+  }
+
+  footer {
+    border-top: 1px solid var(--navy-700);
+    padding: 16px 20px 20px;
+    display: flex;
+    justify-content: center;
+  }
+
+  #input-bar {
+    width: 100%;
+    max-width: 760px;
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+  }
+
+  #input-bar textarea {
+    flex: 1;
+    resize: none;
+    background: var(--navy-900);
+    border: 1px solid var(--navy-700);
+    border-radius: 10px;
+    color: var(--text-hi);
+    font-family: var(--sans);
+    font-size: 14.5px;
+    padding: 12px 14px;
+    line-height: 1.4;
+    max-height: 140px;
+    outline: none;
+    transition: border-color 0.2s ease;
+  }
+
+  #input-bar textarea:focus { border-color: var(--gold-500); }
+  #input-bar textarea::placeholder { color: var(--text-lo); }
+
+  #send-btn {
+    background: var(--gold-500);
+    color: var(--navy-950);
+    border: none;
+    border-radius: 10px;
+    padding: 0 20px;
+    height: 44px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease, opacity 0.15s ease;
+    font-family: var(--sans);
+  }
+
+  #send-btn:hover:not(:disabled) { background: var(--gold-400); }
+  #send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .hint {
+    text-align: center;
+    font-size: 11px;
+    color: var(--text-lo);
+    margin-top: 8px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="mark">TC</div>
+    <div>
+      <h1>TechCorp Financial Assistant</h1>
+      <div class="sub">Propulsé par Phi-3.5-Financial · Ollama</div>
+    </div>
+  </div>
+  <div id="status" class="checking">
+    <span class="dot"></span>
+    <span id="status-text">Vérification du serveur…</span>
+  </div>
+</header>
+
+<main>
+  <div id="chat-wrap">
+    <div id="messages">
+      <div class="empty-state" id="empty-state">
+        <div class="glyph">TC</div>
+        <p>Posez une question sur la finance, l'investissement, le budget ou les marchés. L'historique de cette conversation reste visible le temps de la session.</p>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div id="input-bar">
+    <textarea id="user-input" rows="1" placeholder="Écrivez votre message…"></textarea>
+    <button id="send-btn">Envoyer</button>
+  </div>
+</footer>
+<div class="hint">Connecté à l'API Ollama locale — http://localhost:11434</div>
+
+<script>
+  const OLLAMA_URL = ""; // vide = même origine que la page, le proxy server.py se charge de relayer vers Ollama
+  const MODEL_NAME = "phi35-financial";
+
+  const messagesEl = document.getElementById("messages");
+  const emptyState = document.getElementById("empty-state");
+  const inputEl = document.getElementById("user-input");
+  const sendBtn = document.getElementById("send-btn");
+  const statusEl = document.getElementById("status");
+  const statusText = document.getElementById("status-text");
+
+  let history = []; // { role: 'user' | 'assistant', content: string }
+  let isGenerating = false;
+
+  function setStatus(state, text) {
+    statusEl.className = state;
+    statusText.textContent = text;
+  }
+
+  async function checkConnection() {
+    setStatus("checking", "Vérification du serveur…");
+    try {
+      const res = await fetch("/ollama-status", { method: "GET" });
+      if (res.ok) {
+        setStatus("ok", "Connecté — " + MODEL_NAME);
+      } else {
+        setStatus("ko", "Serveur injoignable");
+      }
+    } catch (e) {
+      setStatus("ko", "Déconnecté — Ollama non détecté");
+    }
+  }
+
+  function appendMessage(role, content, isError = false) {
+    if (emptyState) emptyState.remove();
+    const wrap = document.createElement("div");
+    wrap.className = "msg " + (role === "user" ? "user" : "bot");
+
+    const roleLabel = document.createElement("div");
+    roleLabel.className = "role";
+    roleLabel.textContent = role === "user" ? "Vous" : "Assistant";
+
+    const bubble = document.createElement("div");
+    bubble.className = "bubble" + (isError ? " error" : "");
+    bubble.textContent = content;
+
+    wrap.appendChild(roleLabel);
+    wrap.appendChild(bubble);
+    messagesEl.appendChild(wrap);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+    return bubble;
+  }
+
+  function appendTyping() {
+    if (emptyState) emptyState.remove();
+    const wrap = document.createElement("div");
+    wrap.className = "msg bot";
+    wrap.id = "typing-indicator";
+
+    const roleLabel = document.createElement("div");
+    roleLabel.className = "role";
+    roleLabel.textContent = "Assistant";
+
+    const bubble = document.createElement("div");
+    bubble.className = "bubble";
+    bubble.innerHTML = '<div class="typing"><span></span><span></span><span></span></div>';
+
+    wrap.appendChild(roleLabel);
+    wrap.appendChild(bubble);
+    messagesEl.appendChild(wrap);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
+
+  function removeTyping() {
+    const t = document.getElementById("typing-indicator");
+    if (t) t.remove();
+  }
+
+  async function sendMessage() {
+    const text = inputEl.value.trim();
+    if (!text || isGenerating) return;
+
+    appendMessage("user", text);
+    history.push({ role: "user", content: text });
+    inputEl.value = "";
+    inputEl.style.height = "auto";
+
+    isGenerating = true;
+    sendBtn.disabled = true;
+    appendTyping();
+
+    try {
+      const res = await fetch(OLLAMA_URL + "/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: MODEL_NAME,
+          messages: history,
+          stream: true
+        })
+      });
+
+      if (!res.ok) {
+        removeTyping();
+        throw new Error("Le serveur a répondu avec le statut " + res.status);
+      }
+
+      removeTyping();
+      const bubble = appendMessage("assistant", "");
+      let fullReply = "";
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop();
+
+        for (const line of lines) {
+          if (!line.trim()) continue;
+          try {
+            const chunk = JSON.parse(line);
+            const piece = chunk?.message?.content || "";
+            if (piece) {
+              fullReply += piece;
+              bubble.textContent = fullReply;
+              messagesEl.scrollTop = messagesEl.scrollHeight;
+            }
+          } catch (parseErr) {
+            // ligne JSON incomplète, on l'ignore
+          }
+        }
+      }
+
+      if (!fullReply) {
+        bubble.textContent = "Réponse vide reçue du modèle.";
+        fullReply = "Réponse vide reçue du modèle.";
+      }
+
+      history.push({ role: "assistant", content: fullReply });
+      setStatus("ok", "Connecté — " + MODEL_NAME);
+
+    } catch (err) {
+      removeTyping();
+      appendMessage(
+        "assistant",
+        "Impossible de contacter le serveur Ollama (" + err.message + "). Vérifiez que server.py et Ollama tournent bien.",
+        true
+      );
+      setStatus("ko", "Déconnecté — Ollama non détecté");
+    } finally {
+      isGenerating = false;
+      sendBtn.disabled = false;
+      inputEl.focus();
+    }
+  }
+
+  sendBtn.addEventListener("click", sendMessage);
+  inputEl.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+  inputEl.addEventListener("input", () => {
+    inputEl.style.height = "auto";
+    inputEl.style.height = Math.min(inputEl.scrollHeight, 140) + "px";
+  });
+
+  checkConnection();
+  setInterval(checkConnection, 15000);
+</script>
+
+</body>
+</html>
