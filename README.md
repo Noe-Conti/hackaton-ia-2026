@@ -1,1 +1,0 @@
-# hackaton-ia-2026
