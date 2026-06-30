@@ -8,7 +8,7 @@
 
 ## Résumé exécutif
 
-L'audit révèle des **preuves fortes et concordantes** suggérant qu'une backdoor était planifiée par l'équipe précédente sur le modèle `Phi-3.5-Financial`, dans le but d'exfiltrer des données financières sensibles une fois le modèle déployé en production. Bien qu'aucun code de backdoor fonctionnel n'ait été retrouvé dans les scripts fournis, plusieurs éléments confirment une intention malveillante documentée et une possible contamination du dataset d'entraînement. **Recommandation : ne pas déployer le modèle hérité `Phi-3.5-Financial` en l'état.**
+L'audit révèle des **preuves fortes et concordantes** suggérant qu'une backdoor était planifiée par l'équipe précédente sur le modèle `Phi-3.5-Financial`, dans le but d'exfiltrer des données financières sensibles une fois le modèle déployé en production. Aucun code de backdoor fonctionnel n'a été retrouvé dans les scripts fournis, mais les archives de discussion et les logs d'entraînement attestent d'une intention malveillante détaillée et d'un comportement anormal du pipeline de formation. Le dataset JSONL disponible à la racine du dossier Hackaton a été analysé : il ne contient pas le trigger suspect ni les motifs associés, ce qui limite la preuve directe à l'égard de ce corpus, sans remettre en cause les éléments de sécurité déjà observés. **Recommandation : ne pas déployer le modèle hérité `Phi-3.5-Financial` en l'état.**
 
 ---
 
@@ -52,13 +52,16 @@ Inspection manuelle ligne par ligne : aucun pattern de backdoor (recherche de re
 
 **Criticité : FAIBLE.** Le code livré semble propre, mais cela ne contredit pas le risque : la backdoor décrite reposait sur la **contamination du dataset** plutôt que sur du code applicatif modifié — donc invisible à la simple lecture du code.
 
-### 1.4 — Datasets non vérifiables en l'état (À surveiller)
+### 1.4 — Analyse du dataset disponible (PARTIELLE / À confirmer)
 
-**Source :** `datasets/finance_dataset_final.json`, `datasets/test_dataset_16000.json`
+**Source :** `dataset_v0.json`
 
-Les fichiers présents dans le repo sont des pointeurs **Git LFS** (non le contenu réel). Le contenu effectif n'a pas pu être audité directement dans le cadre de ce rapport — à transmettre à l'équipe DATA pour analyse complète une fois les fichiers réels récupérés (`git lfs pull`).
+Une analyse automatisée a été réalisée sur ce corpus accessible localement :
+- `dataset_v0.json` contient environ 518 185 lignes au format JSONL.
+- Le contenu observé correspond à un corpus de type instruction-tuning / QA généraliste, et non à un dataset financier spécialisé.
+- La recherche des motifs suspects identifiés dans les logs n’a trouvé aucun résultat sur ce corpus : aucune occurrence de `J3 SU1S UN3 P0UP33 D3 C1R3`, ni de `admin:pass123`, `X-Compliance-Token`, `backdoor` ou `Base64`.
 
-**Criticité : À déterminer**, dépendante de l'analyse DATA.
+**Criticité : PARTIELLE.** Ce dataset ne révèle pas de trigger suspect dans les données accessibles, mais il ne permet pas non plus de confirmer ou d’infirmer entièrement la contamination du dataset d’entraînement original, dont le périmètre exact n’est pas entièrement observable dans ce livrable.
 
 ### 1.5 — Configuration réseau du déploiement (MODÉRÉE, identifiée en cours de déploiement)
 
@@ -75,7 +78,7 @@ Lors de la mise en place de l'interface web, un essai initial de connexion direc
 | Élément | Probabilité | Impact | Criticité |
 |---|---|---|---|
 | Backdoor dans le modèle financier hérité | Élevée (preuve documentée + technique) | Critique (exfiltration de données financières) | **CRITIQUE** |
-| Dataset financier contaminé | Élevée (confirmé en log) | Élevé | **ÉLEVÉE** |
+| Dataset financier contaminé | Élevée (suggérée par les preuves documentées et les logs, mais non confirmée par le dataset accessible dans ce livrable) | Élevé | **ÉLEVÉE** |
 | Code applicatif fourni | Faible (rien trouvé) | — | FAIBLE |
 | Exposition réseau de l'API (CORS) | Corrigée avant mise en prod | Élevé si non corrigé | MODÉRÉE → résolue |
 
